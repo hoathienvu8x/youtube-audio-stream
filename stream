@@ -24,7 +24,7 @@ def get_videos(url):
     }
 
     info = SimpleYoutu(ydl_params).extract_info(url, download=False)
-    if "format_id" not in info or "formats" not in info or not isinstance(info['formats'],list):
+    if not isinstance(info,dict) or "format_id" not in info or "formats" not in info or not isinstance(info['formats'],list):
         return {
             'error':'Could not find audio'
         }
