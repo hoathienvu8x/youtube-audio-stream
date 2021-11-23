@@ -2,6 +2,8 @@
 
 Simple Audio Stream on local, work on low network connection
 
+> This code works on python 3 that's not tested on python version less than 3
+
 # Requirements
 
 1. Flask
