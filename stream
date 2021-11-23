@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from flask import Flask, request, jsonify, render_template_string
+import youtube_dl as ytdl
+
+app = Flask(__name__)
+
+app.config['DEBUG'] = False
+app.config['PORT'] = 9600
+app.config["JSON_AS_ASCII"] = False
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+
+class SimpleYoutu(ytdl.YoutubeDL):
+    def __init__(self, *args, **kargs):
+        super(SimpleYoutu, self).__init__(*args, **kargs)
+        self.add_default_info_extractors()
+
+def get_videos(url):
+    ydl_params = {
+        'cachedir': None,
+        # 'logger': app.logger.getChild('youtube-dl'),
+        'format' : 'bestaudio/best'
+    }
+
+    info = SimpleYoutu(ydl_params).extract_info(url, download=False)
+    if "format_id" not in info or "formats" not in info or not isinstance(info['formats'],list):
+        return {
+            'error':'Could not find audio'
+        }
+    data = None
+    for obj in info['formats']:
+        if 'format_id' not in obj:
+            continue
+        if obj['format_id'] == info['format_id']:
+            data = obj['url'] if 'url' in obj else None
+            break
+    if not data:
+        return {
+            'error':'Could not find audio'
+        }
+
+    return {
+        'data':data
+    }
+
+@app.route("/")
+def yt_welcome():
+    return jsonify(['Hi there'])
+
+@app.route("/fetch", methods=['GET', 'POST'])
+def yt_fetch():
+    if request.method == "POST":
+        req = request.form
+    else:
+        req = request.args
+
+    video_id = req.get("vid", "").strip()
+    if not video_id:
+        return jsonify({
+            'error':'Invalid video ID'
+        })
+
+    youtube_url = "https://www.youtube.com/watch?v={}".format(video_id)
+    info = get_videos(youtube_url)
+    return jsonify(info)
+
+@app.route("/stream")
+def yt_stream():
+    video_id = request.args.get('id','').strip()
+    return render_template_string('<!doctype html><html><head><link rel="shortcut icon" href="https://www.youtube.com/s/desktop/c3755e48/img/favicon.ico" type="image/x-icon"><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge" /><meta name="viewport" content="width=device-width, initial-scale=1"><style>* { margin: 0; padding: 0; box-sizing: border-box; } form, audio { max-width: 300px; margin: 5% auto; display: block; } form { display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; } input, button { padding: 8px; border: none; font-size: medium; font-family: arial,sans-serif; outline: none; } button { background-color: #ddd; }</style><title>Stream Youtube Audio</title></head><body><form spellcheck="false" action="{{ url_for(".yt_fetch") }}" method="get"> <input type="text" name="vid" value="{% if video_id %}{{ video_id }}{% endif %}" placeholder="Video ID" /><button type="submit">Fetch</button></form><script type="text/javascript">document.addEventListener("DOMContentLoaded", function(e) { document.querySelector(\'button[type="submit"]\').addEventListener("click", function(e) { e.preventDefault(); var vid = document.querySelector(\'input[name="vid"]\'); if (!vid) { alert("Opts."); } else { const video_id = vid.value.trim(); if (video_id.length > 0) { var xhttp = new XMLHttpRequest(); xhttp.onload = function() { if (this.readyState == 4 && this.status == 200) { try { var obj = JSON.parse(this.responseText); if(obj.hasOwnProperty("error")) { alert(obj.error); } else { if (!obj.hasOwnProperty("data")) { alert("Opts"); } else { var audio = document.querySelector("audio#player"); if (!audio) { audio = document.createElement("audio"); audio.id = "player"; audio.controls = true; document.body.appendChild(audio); } audio.src = obj.data; audio.play(); } } } catch (ex) { alert(ex.message); } } else { alert("Opts."); } }; xhttp.open("GET","{{ url_for(".yt_fetch") }}?vid=" + video_id, true); xhttp.send(); } else { alert("Invalid Video ID"); } } return false; }, false);}, false);</script></body></html>', video_id=video_id)
+
+if __name__ == "__main__":
+    if app.config["DEBUG"] == False:
+        import logging
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
+        app.logger.disabled = True
+
+    app.run('0.0.0.0', port=app.config["PORT"])
