@@ -44,4 +44,4 @@ youtube audio parsed is not ok, return `JSON` object struct like:
 
 The `title`, `description` sometime is not responded
 
-To using UI please visit url `http://127.0.0.1:9600/stream` allow `GET` method, param `is` not required if using that `id` is Youtube ID
+To using UI please visit url `http://127.0.0.1:9600/stream` allow `GET` method, param `id` not required if using that `id` is Youtube ID
