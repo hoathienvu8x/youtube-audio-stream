@@ -49,6 +49,10 @@ def get_videos(url):
     for obj in info['formats']:
         if 'url' not in obj or 'ext' not in obj:
             continue
+
+        if 'asr' in obj and not obj['asr']:
+            continue
+
         if not data:
             data = []
         data.append({
