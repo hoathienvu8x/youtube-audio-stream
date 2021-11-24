@@ -23,7 +23,25 @@ To Restful using url `http://127.0.0.1:9600/fetch` methods allowed `[POST, GET]`
 
 `vid`: Youtube ID like this `https://www.youtube.com/watch?v=wGY81Ms6OLs` then so `vid` is `wGY81Ms6OLs`
 
-Response is `JSON` object type with key container `error` or `data` if has key `error` that mean
-youtube audio parsed is not ok, else key `data` store `url` of audio
+Response is `JSON` object type if has key `error` that mean
+youtube audio parsed is not ok, return `JSON` object struct like:
+
+**Full JSON**
+
+```json
+{
+  "title":"the title",
+  "description":"the description",
+  "formats":[
+    {
+      "mimetype":"mimetype",
+      "tag": "tag id",
+      "url":"url stream"
+    }
+  ]
+}
+```
+
+The `title`, `description` sometime is not responded
 
 To using UI please visit url `http://127.0.0.1:9600/stream` allow `GET` method, param `is` not required if using that `id` is Youtube ID
